@@ -1,43 +1,212 @@
 ---
-about:
-  template: trestles
-  id: about-block
-  image-width: 17em
-  image-shape: round
-  image: "../assets/img/my_image.jpg"
-  links:
-    - icon: linkedin
-      text: LinkedIn
-      href: https://www.linkedin.com/in/biplabendu
-    - icon: envelope
-      text: Email
-      href: "mailto:your-email-here@zzzz.com"  
+title: "Heatmaps"
+format: 
+  html:
+    toc-depth: 3
+editor_options: 
+  chunk_output_type: console
+weight: 2
+execute: 
+  echo: true
+  warning: false
+  message: false
 ---
 
-::: {#about-block}
-
-## Your Name, M.Tech
-
-Dude works at Beep Boop Stats. When not working, Dude enjoys 
-spending time on A, B, and C.
-
-## Experience
-
-1. Head Data Scientist, *Beep Boop Stats LLC*, April 2018 - present
-
-2. Chief Analyst, *The Other Company*, Sept 2012 - April 2018
-
-::: 
-
+# Load dataset
 
 ```{r}
-dttm <- Sys.time() |> 
-  .POSIXct("MST") |> 
-  format("%Y-%m-%d %H:%M %Z")
+library(dplyr)
 
-today <- Sys.time() |> .POSIXct("MST") |> lubridate::as_date()
+path = here::here(
+  "content/data/pied_net-sensitivity_2025-11-21.RDS"
+)
+dat <- readRDS(path)
+
+dat |> 
+  head() |> 
+  kableExtra::kable()
 ```
 
-<p align = "right" style="font-size: 15px;">
-Last updated on `r today`
-</p>
+
+# Set species and variable of interest 
+
+```{r}
+sp = "pinus_edulis"
+
+voi = "winter_ppt"
+
+```
+
+
+# Transform data 
+```{r}
+sub <- dat |>
+  filter(
+    variable == voi
+  ) |>
+  select(
+    - variable
+  ) |>
+  mutate(
+    year = paste0("Y", year),
+    plot_name = paste0("P", Plot),
+    mu = if_else(
+      sign(mu + mu_ci) * sign(mu - mu_ci) == -1,
+      0,
+      mu
+    )
+  ) |>
+  select(
+    gs,
+    plot_name,
+    year,
+    mu
+  ) |>
+  arrange(
+    gs,
+    plot_name,
+    year
+  ) |>
+  distinct() 
+
+sub |> 
+  head() |> 
+  kableExtra::kable()
+
+```
+
+
+# Install / Load timecourseRnaseq
+
+**Install the latest version of the package from GitHub.**
+
+Several packages allow you to install from github,
+we will use the `renv` package.
+
+```{r}
+if (!requireNamespace("renv", quietly = TRUE)) {
+  install.packages("renv")
+}
+```
+
+Once renv is installed, get the latest version of the `timecourseRnaseq` 
+package, and the `pheatmap` package
+
+```{r}
+if (!requireNamespace("timecourseRnaseq", quietly = TRUE)) {
+  renv::install("biplabendu/timecourseRnaseq")
+}
+
+if (!requireNamespace("pheatmap", quietly = TRUE)) {
+  renv::install("pheatmap") # you can use renv to install from CRAN as well
+}
+```
+
+# Part I: Combined Plots
+
+## Transform data
+
+> Showing only the first 6 rows and 6 columns.
+
+```{r}
+plot_data <- sub |>
+  mutate(
+    year = paste0(gs, "-", year)
+  ) |>
+  select(- gs) |>
+  tidyr::pivot_wider(
+    names_from = year,
+    values_from = mu
+  ) |>
+  select_if(
+    ~ sum(is.na(.)) == 0
+  )
+
+plot_data[1:6, 1:6]
+```
+
+## Define column annotation
+
+> You can make this dataset any way you seem fit.
+
+* We want each column to be a trait of the plots.
+* We want the rownames to specify the plot corresponding to each trait value
+
+> Showing only the first 10 rows
+
+```{r}
+col_annot <- data.frame(
+  colname = plot_data[-1] |> colnames()
+) |>
+  rowwise() |>
+  mutate(
+    sample = stringr::str_split(colname, "-")[[1]][1]
+  ) |>
+  ungroup() |>
+  tibble::column_to_rownames("colname")
+
+col_annot |> 
+  head()
+```
+
+## Plot
+
+We will use the `tc_plot_heatmap()` function from the **timecourseRnaseq** pkg.
+
+```{r eval=FALSE}
+# Read the documentation
+?timecourseRnaseq::tc_plot_heatmap
+```
+
+Use the following to plot, clustered by row-wise,
+
+```{r}
+plot_data |>
+  timecourseRnaseq::tc_plot_heatmap(
+    title = paste0(sp, "; ", voi),
+    col_annot = col_annot,
+    cluster_cols = FALSE,
+    cutree_cols = 2,
+    n_clusters = 5
+  )
+
+```
+
+# Part II: Individual plots
+
+## Transform data
+
+```{r}
+dat_list <- sub |>
+  group_split(gs) |>
+  setNames(
+    c("high", "low")
+  ) |>
+  purrr::map(
+    ~ .x |>
+      select(
+        - gs
+      ) |>
+      tidyr::pivot_wider(
+        names_from = year,
+        values_from = mu
+      ) |>
+      select_if(
+        ~ sum(is.na(.)) == 0
+      )
+  )
+```
+
+## Plot data
+
+```{r}
+p <- purrr::map(
+  names(dat_list),
+  ~ dat_list[[.x]] |>
+    timecourseRnaseq::tc_plot_heatmap(
+      title = paste0(sp, "\n", voi, ": ", .x),
+      n_clusters = 5
+    )
+)
+```
+

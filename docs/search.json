@@ -2,50 +2,50 @@
   {
     "objectID": "index.html",
     "href": "index.html",
-    "title": "Website-Title",
+    "title": "Heatmaps",
     "section": "",
-    "text": "LinkedIn\n  \n  \n    \n     Email\n  \n\n  \n  \n\n\nDude works at Beep Boop Stats. When not working, Dude enjoys spending time on A, B, and C.\n\n\n\n\nHead Data Scientist, Beep Boop Stats LLC, April 2018 - present\nChief Analyst, The Other Company, Sept 2012 - April 2018\nLast updated on 2025-05-06"
+    "text": "Show code\nlibrary(dplyr)\n\npath = here::here(\n  \"content/data/pied_net-sensitivity_2025-11-21.RDS\"\n)\ndat &lt;- readRDS(path)\n\ndat |&gt; \n  head() |&gt; \n  kableExtra::kable()\n\n\nsystemfonts and textshaping have been compiled with different versions of Freetype. Because of this, textshaping will not use the font cache provided by systemfonts\n\n\n\n\n\nvariable\ngs\nPlot\nyear\nmu\nmu_ci\n\n\n\n\nwinter_ppt\nlow\n27\n1900\n-1.739341\n0.4010559\n\n\nwinter_ppt\nlow\n27\n1901\n-2.393825\n0.2053101\n\n\nwinter_ppt\nlow\n27\n1902\n-1.801620\n0.4045216\n\n\nwinter_ppt\nlow\n27\n1903\n-2.597147\n0.4886096\n\n\nwinter_ppt\nlow\n27\n1904\n-1.495304\n0.5284416\n\n\nwinter_ppt\nlow\n27\n1905\n-3.046124\n0.2218432"
   },
   {
-    "objectID": "index.html#some-dude-m.tech",
-    "href": "index.html#some-dude-m.tech",
-    "title": "Website-Title",
-    "section": "",
-    "text": "Dude works at Beep Boop Stats. When not working, Dude enjoys spending time on A, B, and C."
+    "objectID": "index.html#transform-data-1",
+    "href": "index.html#transform-data-1",
+    "title": "Heatmaps",
+    "section": "Transform data",
+    "text": "Transform data\n\nShowing only the first 6 rows and 6 columns.\n\n\n\nShow code\nplot_data &lt;- sub |&gt;\n  mutate(\n    year = paste0(gs, \"-\", year)\n  ) |&gt;\n  select(- gs) |&gt;\n  tidyr::pivot_wider(\n    names_from = year,\n    values_from = mu\n  ) |&gt;\n  select_if(\n    ~ sum(is.na(.)) == 0\n  )\n\nplot_data[1:6, 1:6]\n\n\n# A tibble: 6 × 6\n  plot_name `high-Y1928` `high-Y1929` `high-Y1931` `high-Y1932` `high-Y1933`\n  &lt;chr&gt;            &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;\n1 P107             1.21         0.688         0           0             0   \n2 P11             -2.67         3.00          1.07        1.16          1.83\n3 P114             1.64         2.08          1.82        1.93          1.75\n4 P127             2.77         1.12          2.14        0.983         1.85\n5 P16              3.98         1.50          2.73        2.12          2.17\n6 P18              0.923        6.22          2.28        0.723         5.53"
   },
   {
-    "objectID": "index.html#experience",
-    "href": "index.html#experience",
-    "title": "Website-Title",
-    "section": "",
-    "text": "Head Data Scientist, Beep Boop Stats LLC, April 2018 - present\nChief Analyst, The Other Company, Sept 2012 - April 2018"
+    "objectID": "index.html#define-column-annotation",
+    "href": "index.html#define-column-annotation",
+    "title": "Heatmaps",
+    "section": "Define column annotation",
+    "text": "Define column annotation\n\nYou can make this dataset any way you seem fit.\n\n\nWe want each column to be a trait of the plots.\nWe want the rownames to specify the plot corresponding to each trait value\n\n\nShowing only the first 10 rows\n\n\n\nShow code\ncol_annot &lt;- data.frame(\n  colname = plot_data[-1] |&gt; colnames()\n) |&gt;\n  rowwise() |&gt;\n  mutate(\n    sample = stringr::str_split(colname, \"-\")[[1]][1]\n  ) |&gt;\n  ungroup() |&gt;\n  tibble::column_to_rownames(\"colname\")\n\ncol_annot |&gt; \n  head()\n\n\n           sample\nhigh-Y1928   high\nhigh-Y1929   high\nhigh-Y1931   high\nhigh-Y1932   high\nhigh-Y1933   high\nhigh-Y1934   high"
+  },
+  {
+    "objectID": "index.html#plot",
+    "href": "index.html#plot",
+    "title": "Heatmaps",
+    "section": "Plot",
+    "text": "Plot\nWe will use the tc_plot_heatmap() function from the timecourseRnaseq pkg.\n\n\nShow code\n# Read the documentation\n?timecourseRnaseq::tc_plot_heatmap\n\n\nUse the following to plot, clustered by row-wise,\n\n\nShow code\nplot_data |&gt;\n  timecourseRnaseq::tc_plot_heatmap(\n    title = paste0(sp, \"; \", voi),\n    col_annot = col_annot,\n    cluster_cols = FALSE,\n    cutree_cols = 2,\n    n_clusters = 5\n  )"
+  },
+  {
+    "objectID": "index.html#transform-data-2",
+    "href": "index.html#transform-data-2",
+    "title": "Heatmaps",
+    "section": "Transform data",
+    "text": "Transform data\n\n\nShow code\ndat_list &lt;- sub |&gt;\n  group_split(gs) |&gt;\n  setNames(\n    c(\"high\", \"low\")\n  ) |&gt;\n  purrr::map(\n    ~ .x |&gt;\n      select(\n        - gs\n      ) |&gt;\n      tidyr::pivot_wider(\n        names_from = year,\n        values_from = mu\n      ) |&gt;\n      select_if(\n        ~ sum(is.na(.)) == 0\n      )\n  )"
+  },
+  {
+    "objectID": "index.html#plot-data",
+    "href": "index.html#plot-data",
+    "title": "Heatmaps",
+    "section": "Plot data",
+    "text": "Plot data\n\n\nShow code\np &lt;- purrr::map(\n  names(dat_list),\n  ~ dat_list[[.x]] |&gt;\n    timecourseRnaseq::tc_plot_heatmap(\n      title = paste0(sp, \"\\n\", voi, \": \", .x),\n      n_clusters = 5\n    )\n)"
   },
   {
     "objectID": "contact/index.html",
     "href": "contact/index.html",
     "title": "Contact",
     "section": "",
-    "text": "You can contact me at abc@zzzz.com"
-  },
-  {
-    "objectID": "book_appointments.html",
-    "href": "book_appointments.html",
-    "title": "Book an appointment",
-    "section": "",
-    "text": "Kindly use the following app to schedule an appointment with me."
-  },
-  {
-    "objectID": "index.html#your-name-m.tech",
-    "href": "index.html#your-name-m.tech",
-    "title": "Website-Title",
-    "section": "",
-    "text": "Dude works at Beep Boop Stats. When not working, Dude enjoys spending time on A, B, and C."
-  },
-  {
-    "objectID": "instagram.html",
-    "href": "instagram.html",
-    "title": "Website-Title",
-    "section": "",
-    "text": "View this profile on Instagram\n        \n        \n        \n          \n            \n            \n            \n          \n          \n            \n            \n          \n          \n            \n            \n            \n          \n        \n        \n          \n          \n        \n      \n      \n        Amelia (Mealz) VanDuzee (@hair.by.mealz) • Instagram photos and videos"
+    "text": "You can contact me at beepboopstats@gmail.com"
   }
 ]

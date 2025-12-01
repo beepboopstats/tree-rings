@@ -8,38 +8,30 @@ execute:
   warning: false
   
 website:
-  title: "Website-Title"
-  # google-analytics: "UA-121215066-1"
+  title: "Tree Rings"
+  google-analytics: "G-LXSX23EQ95"
   reader-mode: false
-  page-footer: Beep Boop Stats
+  page-footer: © Beep Boop Stats
   # top nav
   navbar:
     pinned: true
     logo: ../assets/img/favicon.png
     search: true
     left:
-      # - text: "Home"
-      #   file: index.qmd
-      - text: "Book Appointments"
-        file: book_appointments.qmd
-      - text: "Instagram"
-        file: instagram.qmd
       - text: "Contact"
         file: contact/index.qmd
+    css: ../assets/css/styles.scss
 
 format:
   html:
     theme: 
       light: 
         - pulse
-        - assets/css/styles.scss
-      dark: 
-        - darkly
-        - assets/css/styles.scss
+        - ../assets/css/styles.scss
     fontsize: 1.1em
     page-layout: full
     toc: true
-    toc-depth: 4
+    toc-depth: 3
     toc-location: left
     toc-expand: 1
     embed-resources: true
