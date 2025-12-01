@@ -1,0 +1,43 @@
+---
+about:
+  template: trestles
+  id: about-block
+  image-width: 17em
+  image-shape: round
+  image: "../assets/img/my_image.jpg"
+  links:
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/biplabendu
+    - icon: envelope
+      text: Email
+      href: "mailto:your-email-here@zzzz.com"  
+---
+
+::: {#about-block}
+
+## Your Name, M.Tech
+
+Dude works at Beep Boop Stats. When not working, Dude enjoys 
+spending time on A, B, and C.
+
+## Experience
+
+1. Head Data Scientist, *Beep Boop Stats LLC*, April 2018 - present
+
+2. Chief Analyst, *The Other Company*, Sept 2012 - April 2018
+
+::: 
+
+
+```{r}
+dttm <- Sys.time() |> 
+  .POSIXct("MST") |> 
+  format("%Y-%m-%d %H:%M %Z")
+
+today <- Sys.time() |> .POSIXct("MST") |> lubridate::as_date()
+```
+
+<p align = "right" style="font-size: 15px;">
+Last updated on `r today`
+</p>
